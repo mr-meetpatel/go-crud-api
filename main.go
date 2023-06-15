@@ -9,15 +9,22 @@ import (
 	"net/http"
 	"os"
 
+	_ "github.com/mr-meetpatel/go-crud-api/docs"
+
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type Article struct {
 	Id      int    `json:"id"`
 	Title   string `json:"title"`
 	Content string `json:"content"`
+}
+
+type CustomError struct {
+	Message string `json:"message"`
 }
 
 var db *sql.DB
@@ -68,10 +75,24 @@ func closeDB() {
 	}
 }
 
+// HomePage godoc
+// @Summary  Welcome Message
+// @Description Welcome Message
+// @Tags Home
+// @Produce plain
+// @Success 200
+// @Router / [get]
 func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to home page")
 }
 
+// ReturnAllArticles godoc
+// @Summary  Return All Articles
+// @Description Return All Articles aviable in Database
+// @Tags Article
+// @Produce  json
+// @Success 200 {object} Article
+// @Router /articles [get]
 func returnAllArticles(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint Hit: returnAllArticles")
 	rows, err := db.Query("SELECT * FROM articles")
@@ -104,6 +125,15 @@ func returnAllArticles(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(articles)
 }
 
+// ReturnSingleArticle godoc
+// @Summary  Return single Article
+// @Description Return single Article by articleId
+// @Param id  path string  true  "Article ID"
+// @Tags Article
+// @Produce  json
+// @Success 200 {object} Article
+// @Failure 404 {object} CustomError
+// @Router /articles/{id} [get]
 func returnSingleArticle(w http.ResponseWriter, r *http.Request) {
 	articleId := mux.Vars(r)["id"]
 	fmt.Println("Endpoint Hit: returnSingleArticle")
@@ -130,6 +160,15 @@ func returnSingleArticle(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(article)
 }
 
+// CreateNewArticle godoc
+// @Summary Create a new Article
+// @Description Create a new Article with the input paylod
+// @Tags Article
+// @Accept  json
+// @Produce  json
+// @Param article body Article true "Create article"
+// @Success 201 {object} Article
+// @Router /articles [post]
 func createNewArticle(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint Hit: createNewArticle")
 	payload, _ := ioutil.ReadAll(r.Body)
@@ -153,6 +192,13 @@ func createNewArticle(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(newArticle)
 }
 
+// deleteArticleById godoc
+// @Summary Delete an Article
+// @Description Delete an Article by article id
+// @Tags Article
+// @Param id  path string  true  "Article ID"
+// @Success 204
+// @Router /articles/{id} [delete]
 func deleteArticleById(w http.ResponseWriter, r *http.Request) {
 	articleId := mux.Vars(r)["id"]
 	fmt.Println("Endpoint Hit: deleteArticleById")
@@ -178,6 +224,17 @@ func deleteArticleById(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// UpdateArticleById godoc
+// @Summary Update an Article
+// @Description Update an Article by article id
+// @Tags Article
+// @Accept  json
+// @Produce  json
+// @Param article body Article true "Update article"
+// @Param id  path string  true  "Article ID"
+// @Success 200 {object} Article
+// @Failure 404 {object} CustomError
+// @Router /articles/{id} [put]
 func updateArticle(w http.ResponseWriter, r *http.Request) {
 	articleId := mux.Vars(r)["id"]
 	fmt.Println("Endpoint Hit: updateArticle")
@@ -220,11 +277,24 @@ func handleRequests() {
 	myRouter.HandleFunc("/articles", createNewArticle).Methods("POST")
 	myRouter.HandleFunc("/articles/{id}", deleteArticleById).Methods("DELETE")
 	myRouter.HandleFunc("/articles/{id}", updateArticle).Methods("PUT")
-
+	// Swagger
+	myRouter.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"), // The path to your swagger.json file
+	))
 	fmt.Printf("Server Start on port 8000\n")
 	http.ListenAndServe(":8000", myRouter)
 }
 
+// @title Articles API
+// @version 1.0
+// @description This is a sample API for managing Articles
+// @termsOfService http://swagger.io/terms/
+// @contact.name API Support
+// @contact.email email@swagger.io
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @host localhost:8000
+// @BasePath /
 func main() {
 	initDB()
 	defer closeDB()
