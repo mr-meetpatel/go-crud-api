@@ -11,6 +11,7 @@ import (
 
 	_ "github.com/mr-meetpatel/go-crud-api/docs"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -19,10 +20,13 @@ import (
 
 type Article struct {
 	Id      int    `json:"id"`
-	Title   string `json:"title"`
-	Content string `json:"content"`
+	Title   string `json:"title" validate:"required"`
+	Content string `json:"content" validate:"required"`
 }
-
+type ValidationError struct {
+	Key   string `json:"key"`
+	Error string `json:"error"`
+}
 type CustomError struct {
 	Message string `json:"message"`
 }
@@ -177,6 +181,21 @@ func createNewArticle(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println("Error while decode payload:", err)
 		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	validate := validator.New()
+	err = validate.Struct(newArticle)
+	if err != nil {
+		validationErrors := err.(validator.ValidationErrors)
+		validationErrorMessages := make([]ValidationError, 0)
+		for _, e := range validationErrors {
+			validationErrorMessages = append(validationErrorMessages, ValidationError{
+				Key:   fmt.Sprintf("'%s'", e.Field()),
+				Error: fmt.Sprintf("Field validation for '%s' failed on the 'required' tag", e.Field()),
+			})
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(validationErrorMessages)
 		return
 	}
 	query := "INSERT INTO articles (title, content) VALUES ($1, $2) RETURNING id, title, content"
