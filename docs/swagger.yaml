@@ -1,0 +1,142 @@
+basePath: /
+definitions:
+  main.Article:
+    properties:
+      content:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+    type: object
+  main.CustomError:
+    properties:
+      message:
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact:
+    email: email@swagger.io
+    name: API Support
+  description: This is a sample API for managing Articles
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Articles API
+  version: "1.0"
+paths:
+  /:
+    get:
+      description: Welcome Message
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+      summary: Welcome Message
+      tags:
+      - Home
+  /articles:
+    get:
+      description: Return All Articles aviable in Database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Article'
+      summary: Return All Articles
+      tags:
+      - Article
+    post:
+      consumes:
+      - application/json
+      description: Create a new Article with the input paylod
+      parameters:
+      - description: Create article
+        in: body
+        name: article
+        required: true
+        schema:
+          $ref: '#/definitions/main.Article'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/main.Article'
+      summary: Create a new Article
+      tags:
+      - Article
+  /articles/{id}:
+    delete:
+      description: Delete an Article by article id
+      parameters:
+      - description: Article ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      summary: Delete an Article
+      tags:
+      - Article
+    get:
+      description: Return single Article by articleId
+      parameters:
+      - description: Article ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Article'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.CustomError'
+      summary: Return single Article
+      tags:
+      - Article
+    put:
+      consumes:
+      - application/json
+      description: Update an Article by article id
+      parameters:
+      - description: Update article
+        in: body
+        name: article
+        required: true
+        schema:
+          $ref: '#/definitions/main.Article'
+      - description: Article ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Article'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.CustomError'
+      summary: Update an Article
+      tags:
+      - Article
+swagger: "2.0"
